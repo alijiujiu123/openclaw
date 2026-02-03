@@ -1,0 +1,50 @@
+{
+  "test_server": {
+    "host": "115.191.18.218",
+    "user": "root",
+    "port": 22,
+    "auth_method": "ssh_key",
+    "status": "ready",
+    "notes": "已配置密钥登录"
+  },
+  "api_keys": {
+    "zhipu": "3101936be6b740899ae7aff4b84807e9.4glgTOraFrWS6wqA"
+  },
+  "tasks": [
+    {
+      "order": 0,
+      "name": "测试服务器环境准备",
+      "priority": "high",
+      "estimated_time": "30 minutes",
+      "start_time": "20:30",
+      "steps": [
+        "连接测试服务器",
+        "运行环境检查脚本",
+        "安装缺失的依赖",
+        "配置智谱 API Key",
+        "验证环境就绪"
+      ]
+    },
+    {
+      "order": 1,
+      "name": "Auto-Deployment Skill",
+      "priority": "high",
+      "estimated_time": "2-3 hours",
+      "issue": "https://github.com/alijiujiu123/openclaw/issues/1"
+    },
+    {
+      "order": 2,
+      "name": "Docker Image",
+      "priority": "high",
+      "estimated_time": "2-3 hours",
+      "issue": "https://github.com/alijiujiu123/openclaw/issues/2"
+    },
+    {
+      "order": 3,
+      "name": "Daily Briefing System",
+      "priority": "high",
+      "estimated_time": "3-4 hours",
+      "repo": "https://github.com/alijiujiu123/daily-briefing-system"
+    }
+  ]
+}

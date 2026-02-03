@@ -1,0 +1,51 @@
+# Node modules
+node_modules/
+npm-debug.log
+package-lock.json
+
+# Workspace (will be mounted as volume)
+workspace/
+
+# OpenClaw data (will be persisted in volume)
+.openclaw/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# CI/CD
+.github/
+
+# Documentation
+*.md
+docs/
+
+# Tests
+tests/
+*.test.*
+*.spec.*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+
+# Temp files
+tmp/
+temp/

@@ -68,15 +68,10 @@
 - Run CLI in dev: `pnpm openclaw ...` (bun) or `pnpm dev`.
 - Node remains supported for running built output (`dist/*`) and production installs.
 - Mac packaging (dev): `scripts/package-mac-app.sh` defaults to current arch. Release checklist: `docs/platforms/mac/release.md`.
-- Type-check/build: `pnpm build` (includes A2UI bundle, TS compilation, and metadata generation)
-- Lint/format: `pnpm lint` (oxlint), `pnpm format` (oxfmt)
-- Tests:
-  - Unit/integration: `pnpm test` (vitest)
-  - Coverage: `pnpm test:coverage`
-  - E2E: `pnpm test:e2e`
-  - Live tests (requires real API keys): `pnpm test:live` (see `docs/testing.md`)
-  - Docker E2E: `pnpm test:docker:onboard`, `pnpm test:docker:live-gateway`
-- Single test: `pnpm test <pattern>` (e.g., `pnpm test agent.test.ts`)
+- Type-check/build: `pnpm build`
+- TypeScript checks: `pnpm tsgo`
+- Lint/format: `pnpm check`
+- Tests: `pnpm test` (vitest); coverage: `pnpm test:coverage`
 
 ## Coding Style & Naming Conventions
 
@@ -146,12 +141,9 @@
 - Pi sessions live under `~/.openclaw/sessions/` by default; the base directory is not configurable.
 - Environment variables: see `~/.profile`.
 - Never commit or publish real phone numbers, videos, or live configuration values. Use obviously fake placeholders in docs, tests, and examples.
-  <<<<<<< HEAD
-- # Release flow: always read `docs/reference/RELEASING.md` and `docs/platforms/mac/release.md` before any release work; do not ask routine questions once those docs answer them.
+  - Release flow: always read `docs/reference/RELEASING.md` and `docs/platforms/mac/release.md` before any release work; do not ask routine questions once those docs answer them.
 - DM security: Default `dmPolicy="pairing"` requires unknown senders to pair via approval code. Public DMs need explicit opt-in (`dmPolicy="open"` with `"*"` in allowlist). See `docs/gateway/security.md`.
 - Gateway auth: Use `gateway.auth.token` or `OPENCLAW_GATEWAY_TOKEN` for all WS connections. Local connections can be auto-approved; remote requires explicit pairing.
-- Release flow: always read `docs/reference/RELEASING.md` and `docs/platforms/mac/release.md` before any release work; do not ask routine questions once those docs answer them.
-  > > > > > > > 20e1f5459 (docs: sync AGENTS.md with CLAUDE.md)
 
 ## Troubleshooting
 

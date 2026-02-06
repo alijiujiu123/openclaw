@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  openclaw:
+    image: openclaw/openclaw:latest
+    container_name: openclaw
+    restart: unless-stopped
+
+    ports:
+      - "18789:18789"
+
+    dns:
+      - 223.5.5.5
+      - 114.114.114.114
+
+    environment:
+      NODE_ENV: production
+      HOME: /home/node
+      COREPACK_ENABLE_STRICT: 0
+      TZ: Asia/Shanghai
+
+      # Gateway 配置
+      GATEWAY_MODE: local
+      GATEWAY_BIND: 0.0.0.0
+      GATEWAY_PORT: "18789"
+
+      # 飞书配置
+      FEISHU_APP_ID: cli_a90e0a082fe15bc8
+      FEISHU_APP_SECRET: pu94WKwf4eJTaJmnijF2RbrKItpTIoJ8
+
+      # 火山引擎模型配置
+      OPENAI_API_KEY: f8174074-96f7-4837-adcd-02e0fcf496e8
+      OPENAI_BASE_URL: https://ark.cn.beijing.volces.com/api/coding/v3
+
+      # Agent Key
+      OPENCLAW_AGENT_KEY: c18d46ef-7e22-4998-b84f-aad33309d174
+
+      # 飞书策略配置 (可选)
+      # FEISHU_DM_POLICY: pairing
+      # FEISHU_GROUP_POLICY: open
+
+    volumes:
+      # 数据持久化
+      - ./data/openclaw-data:/home/node/.openclaw
+      # 工作空间
+      - ./workspace:/workspace
+
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:18789/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

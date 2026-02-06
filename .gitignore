@@ -75,3 +75,12 @@ USER.md
 memory/
 .agent/*.json
 !.agent/workflows/
+
+# Local Docker data and workspace
+backups/
+data/
+workspace/
+
+# Local Docker deployment configs (optional - remove if you want to track these)
+deploy-huoshan.sh
+docker-tg.sh

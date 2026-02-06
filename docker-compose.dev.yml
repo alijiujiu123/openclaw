@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  openclaw-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    image: openclaw-dev:latest
+    container_name: openclaw-dev
+
+    ports:
+      - "18789:18789"
+
+    environment:
+      # Node environment
+      NODE_ENV: development
+
+      # Gateway configuration
+      HOME: /home/openclaw
+      TERM: xterm-256color
+      GATEWAY_MODE: local
+      GATEWAY_BIND: 0.0.0.0
+      GATEWAY_PORT: 18789
+
+      # Model provider (load from .env)
+      ZHIPU_API_KEY: ${ZHIPU_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+
+      # Gateway authentication
+      OPENCLAW_GATEWAY_TOKEN: ${GATEWAY_TOKEN:-auto}
+
+      # Default model
+      OPENCLAW_MODEL: ${OPENCLAW_MODEL:-zhipu/GLM-4.7}
+
+      # Telegram (optional)
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+
+    volumes:
+      # Mount source code for live development
+      - .:/app
+      - /app/node_modules
+
+      # ===== 数据持久化：核心配置、记忆、工具 =====
+
+      # 主要数据目录（最重要！）
+      - openclaw-dev-data:/home/openclaw/.openclaw
+
+      # 额外持久化：skills、自定义扩展
+      - openclaw-dev-skills:/home/openclaw/.openclaw/skills
+
+      # Workspace for agent files（宿主机可见）
+      - ./workspace:/workspace
+
+      # 可选：备份目录（定期备份到宿主机）
+      - ./backups:/backups
+
+    working_dir: /app
+
+    # Keep container running for development
+    stdin_open: true
+    tty: true
+
+    # Override command to allow interactive development
+    command: /bin/sh
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:18789/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  # 核心数据卷：包含所有配置、记忆、会话等
+  openclaw-dev-data:
+    driver: local
+    name: openclaw-dev-data
+
+  # 技能和工具卷：自定义技能、工具
+  openclaw-dev-skills:
+    driver: local
+    name: openclaw-dev-skills

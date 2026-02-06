@@ -1,0 +1,48 @@
+# OpenClaw Runtime Docker 镜像
+# 用于运行 Gateway 和飞书机器人
+
+FROM node:22-alpine
+
+# 安装运行时依赖
+RUN apk add --no-cache \
+    git \
+    curl \
+    bash \
+    tzdata \
+    ca-certificates \
+    vim \
+    procps \
+    dumb-init
+
+# 安装 pnpm
+RUN npm install -g pnpm
+
+# 创建应用目录
+WORKDIR /app
+
+# 创建非 root 用户（与宿主机 UID 1001 对齐）
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S openclaw -u 1001 -G nodejs
+
+# 设置环境变量
+ENV HOME=/home/openclaw \
+    PATH=/app/node_modules/.bin:$PATH \
+    NODE_OPTIONS=--max-old-space-size=4096 \
+    COREPACK_ENABLE_STRICT=0
+
+# 暴露 Gateway 端口
+EXPOSE 18789
+
+# 创建数据目录并设置权限
+RUN mkdir -p /home/openclaw/.openclaw && \
+    chown -R openclaw:nodejs /home/openclaw/.openclaw
+
+# 切换到非 root 用户
+USER openclaw
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD node -e "require('http').get('http://127.0.0.1:18789/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})" || exit 1
+
+# 直接运行（不用 dumb-init 以便看到输出）
+CMD ["node", "dist/index.js", "gateway", "run", "--bind", "lan", "--verbose"]

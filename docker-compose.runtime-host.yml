@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  openclaw-runtime:
+    build:
+      context: .
+      dockerfile: Dockerfile.runtime
+    image: openclaw-runtime:latest
+    container_name: openclaw-runtime
+
+    # 使用 host 网络，解决容器内 127.0.0.1 问题
+    network_mode: host
+
+    environment:
+      NODE_ENV: production
+      HOME: /home/openclaw
+      COREPACK_ENABLE_STRICT: 0
+      GATEWAY_MODE: local
+      # host 模式下不需要端口映射
+      # 火山引擎 API 配置
+      OPENAI_API_KEY: f8174074-96f7-4837-adcd-02e0fcf496e8
+      OPENAI_BASE_URL: https://ark.cn.beijing.volces.com/api/coding/v3
+      TZ: Asia/Shanghai
+
+    volumes:
+      - .:/app
+      - openclaw-data:/home/openclaw/.openclaw
+      - ./workspace:/workspace
+
+    working_dir: /app
+
+    restart: unless-stopped
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  openclaw-data:
+    driver: local

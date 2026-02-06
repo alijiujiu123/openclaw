@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  openclaw-tg:
+    build:
+      context: .
+      dockerfile: Dockerfile.runtime
+    image: openclaw-runtime:latest
+    container_name: openclaw-tg
+
+    ports:
+      - "18790:18789"
+
+    environment:
+      NODE_ENV: production
+      HOME: /home/openclaw
+      COREPACK_ENABLE_STRICT: 0
+      GATEWAY_MODE: local
+      GATEWAY_BIND: 0.0.0.0
+      GATEWAY_PORT: "18789"
+      # 火山引擎 API 配置
+      OPENAI_API_KEY: f8174074-96f7-4837-adcd-02e0fcf496e8
+      OPENAI_BASE_URL: https://ark.cn-beijing.volces.com/api/coding/v3
+      # Telegram Bot Token
+      TELEGRAM_BOT_TOKEN: 8029580154:AAE9QY9enCHkgRAEZ-RtH2oteA3TeLulL_I
+      # 时区
+      TZ: Asia/Shanghai
+
+    volumes:
+      # 挂载源代码（完全访问）
+      - .:/app
+      # 数据持久化 - 使用命名卷
+      - openclaw-tg-data:/home/openclaw/.openclaw
+      # 工作空间
+      - ./workspace:/workspace
+      # 日志
+      - openclaw-tg-logs:/tmp/openclaw
+
+    working_dir: /app
+
+    # 重启策略
+    restart: unless-stopped
+
+    # 覆盖默认命令
+    command: ["sh", "/app/docker-entrypoint-runtime.sh"]
+
+    # 健康检查
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:18789/', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+    # 日志配置
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  openclaw-tg-data:
+    driver: local
+  openclaw-tg-logs:
+    driver: local

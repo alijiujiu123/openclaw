@@ -1,51 +1,60 @@
-# Node modules
-node_modules/
-npm-debug.log
-package-lock.json
-
-# Workspace (will be mounted as volume)
-workspace/
-
-# OpenClaw data (will be persisted in volume)
-.openclaw/
-
-# Git
-.git/
-.gitignore
-.gitattributes
-
-# CI/CD
-.github/
-
-# Documentation
-*.md
-docs/
-
-# Tests
-tests/
-*.test.*
-*.spec.*
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS
+.git
+.worktrees
+.bun-cache
+.bun
+.tmp
+**/.tmp
 .DS_Store
-Thumbs.db
-
-# Environment
-.env
-.env.*
-!.env.example
-
-# Logs
-logs/
+**/.DS_Store
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.gif
+*.mp4
+*.mov
+*.wav
+*.mp3
+node_modules
+**/node_modules
+.pnpm-store
+**/.pnpm-store
+.turbo
+**/.turbo
+.cache
+**/.cache
+.next
+**/.next
+coverage
+**/coverage
 *.log
+tmp
+**/tmp
 
-# Temp files
-tmp/
-temp/
+# build artifacts
+dist
+**/dist
+apps/macos/.build
+apps/ios/build
+**/*.trace
+
+# large app trees not needed for CLI build
+apps/
+assets/
+Peekaboo/
+Swabble/
+Core/
+Users/
+vendor/
+
+# Needed for building the Canvas A2UI bundle during Docker image builds.
+# Keep the rest of apps/ and vendor/ excluded to avoid a large build context.
+!apps/shared/
+!apps/shared/OpenClawKit/
+!apps/shared/OpenClawKit/Tools/
+!apps/shared/OpenClawKit/Tools/CanvasA2UI/
+!apps/shared/OpenClawKit/Tools/CanvasA2UI/**
+!vendor/a2ui/
+!vendor/a2ui/renderers/
+!vendor/a2ui/renderers/lit/
+!vendor/a2ui/renderers/lit/**

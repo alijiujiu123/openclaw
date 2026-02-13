@@ -6,7 +6,7 @@
 ## Project Structure & Module Organization
 
 - Source code: `src/` (CLI wiring in `src/cli`, commands in `src/commands`, web provider in `src/provider-web.ts`, infra in `src/infra`, media pipeline in `src/media`).
-- Tests: colocated `*.test.ts`, e2e tests as `*.e2e.test.ts`, live tests as `*.live.test.ts`.
+- Tests: colocated `*.test.ts`.
 - Docs: `docs/` (images, queue, Pi config). Built output lives in `dist/`.
 - Plugins/extensions: live under `extensions/*` (workspace packages). Keep plugin-only deps in the extension `package.json`; do not add them to the root `package.json` unless core uses them.
 - Plugins: install runs `npm install --omit=dev` in plugin dir; runtime deps must live in `dependencies`. Avoid `workspace:*` in `dependencies` (npm install breaks); put `openclaw` in `devDependencies` or `peerDependencies` instead (runtime resolves `openclaw/plugin-sdk` via jiti alias).
@@ -15,23 +15,13 @@
   - Core channel docs: `docs/channels/`
   - Core channel code: `src/telegram`, `src/discord`, `src/slack`, `src/signal`, `src/imessage`, `src/web` (WhatsApp web), `src/channels`, `src/routing`
   - Extensions (channel plugins): `extensions/*` (e.g. `extensions/msteams`, `extensions/matrix`, `extensions/zalo`, `extensions/zalouser`, `extensions/voice-call`)
-- When adding channels/extensions/apps/docs, review `.github/labeler.yml` for label coverage.
-
-## Core Architecture
-
-- **Gateway** (`src/gateway/`): WebSocket-based control plane managing all messaging surfaces, sessions, tools, and events. See `docs/concepts/architecture.md`.
-- **Agent Runtime** (`src/agents/`): Pi-based agent execution with tool streaming, block streaming, auth profiles, and model failover.
-- **Routing** (`src/routing/`): Maps inbound channels/accounts/peers to agents via `bindings` configuration; determines session keys.
-- **Channels** (`src/telegram`, `src/discord`, etc.): Individual messaging platform integrations with shared channel abstractions.
-- **ACP (Agent Client Protocol)** (`src/acp/`): Protocol adapter connecting agents to the gateway via WebSocket.
-- **Session Management** (`src/sessions/`, `src/config/sessions.ts`): JSON-based session stores with compaction and pruning.
-- **CLI** (`src/cli/`, `src/commands/`): Commander-based CLI interface with lazy-loading subcommands.
-- **Config** (`src/config/`): JSON5 configuration with env var overrides, profile management, and workspace isolation.
+- When adding channels/extensions/apps/docs, update `.github/labeler.yml` and create matching GitHub labels (use existing channel/extension label colors).
 
 ## Docs Linking (Mintlify)
 
 - Docs are hosted on Mintlify (docs.openclaw.ai).
 - Internal doc links in `docs/**/*.md`: root-relative, no `.md`/`.mdx` (example: `[Config](/configuration)`).
+- When working with documentation, read the mintlify skill.
 - Section cross-references: use anchors on root-relative paths (example: `[Hooks](/configuration#hooks)`).
 - Doc headings and anchors: avoid em dashes and apostrophes in headings because they break Mintlify anchor links.
 - When Peter asks for links, reply with full `https://docs.openclaw.ai/...` URLs (not root-relative).
@@ -71,6 +61,8 @@
 - Type-check/build: `pnpm build`
 - TypeScript checks: `pnpm tsgo`
 - Lint/format: `pnpm check`
+- Format check: `pnpm format` (oxfmt --check)
+- Format fix: `pnpm format:fix` (oxfmt --write)
 - Tests: `pnpm test` (vitest); coverage: `pnpm test:coverage`
 
 ## Coding Style & Naming Conventions
@@ -78,12 +70,9 @@
 - Language: TypeScript (ESM). Prefer strict typing; avoid `any`.
 - Formatting/linting via Oxlint and Oxfmt; run `pnpm check` before commits.
 - Add brief code comments for tricky or non-obvious logic.
-- Keep files concise; extract helpers instead of "V2" copies. Use existing patterns for CLI options and dependency injection via `createDefaultDeps`.
+- Keep files concise; extract helpers instead of “V2” copies. Use existing patterns for CLI options and dependency injection via `createDefaultDeps`.
 - Aim to keep files under ~700 LOC; guideline only (not a hard guardrail). Split/refactor when it improves clarity or testability.
 - Naming: use **OpenClaw** for product/app/docs headings; use `openclaw` for CLI command, package/binary, paths, and config keys.
-- Test structure: Unit tests should be fast and deterministic. Use test helpers in `src/test-helpers/` and `src/test-utils/`.
-- Avoid test-side effects: Don't mutate shared state; clean up resources in `afterEach`.
-- Use TypeBox for schemas (protocol, tool inputs, config). See `docs/concepts/typebox.md`.
 
 ## Release Channels (Naming)
 
@@ -94,48 +83,28 @@
 ## Testing Guidelines
 
 - Framework: Vitest with V8 coverage thresholds (70% lines/branches/functions/statements).
-- Naming: match source names with `*.test.ts`; e2e in `*.e2e.test.ts`; live tests with real keys in `*.live.test.ts`.
-- Test types:
-  - **Unit/integration** (`pnpm test`): Fast, deterministic, no external dependencies. Covers routing, auth, tooling, parsing, config.
-  - **E2E** (`pnpm test:e2e`): Multi-instance gateway, WebSocket/HTTP surfaces, node pairing.
-  - **Live** (`pnpm test:live`): Real providers/models with actual API keys. Costs money; use narrow subsets via env vars (see `docs/testing.md`).
+- Naming: match source names with `*.test.ts`; e2e in `*.e2e.test.ts`.
 - Run `pnpm test` (or `pnpm test:coverage`) before pushing when you touch logic.
 - Do not set test workers above 16; tried already.
-- Live tests (real keys): `OPENCLAW_LIVE_TEST=1 pnpm test:live`. Use `OPENCLAW_LIVE_MODELS` or `OPENCLAW_LIVE_GATEWAY_MODELS` to narrow.
-- Docker E2E: `pnpm test:docker:onboard`, `pnpm test:docker:live-gateway`, `pnpm test:docker:live-models`.
-- Full kit + what's covered: `docs/testing.md`.
+- Live tests (real keys): `CLAWDBOT_LIVE_TEST=1 pnpm test:live` (OpenClaw-only) or `LIVE=1 pnpm test:live` (includes provider live tests). Docker: `pnpm test:docker:live-models`, `pnpm test:docker:live-gateway`. Onboarding Docker E2E: `pnpm test:docker:onboard`.
+- Full kit + what’s covered: `docs/testing.md`.
+- Changelog: user-facing changes only; no internal/meta notes (version alignment, appcast reminders, release process).
 - Pure test additions/fixes generally do **not** need a changelog entry unless they alter user-facing behavior or the user asks for one.
 - Mobile: before using a simulator, check for connected real devices (iOS + Android) and prefer them when available.
 
 ## Commit & Pull Request Guidelines
 
+**Full maintainer PR workflow (optional):** If you want the repo's end-to-end maintainer workflow (triage order, quality bar, rebase rules, commit/changelog conventions, co-contributor policy, and the `review-pr` > `prepare-pr` > `merge-pr` pipeline), see `.agents/skills/PR_WORKFLOW.md`. Maintainers may use other workflows; when a maintainer specifies a workflow, follow that. If no workflow is specified, default to PR_WORKFLOW.
+
 - Create commits with `scripts/committer "<msg>" <file...>`; avoid manual `git add`/`git commit` so staging stays scoped.
 - Follow concise, action-oriented commit messages (e.g., `CLI: add verbose flag to send`).
 - Group related changes; avoid bundling unrelated refactors.
-- Changelog workflow: keep latest released version at top (no `Unreleased`); after publishing, bump version and start a new top section.
-- PRs should summarize scope, note testing performed, and mention any user-facing changes or new flags.
 - Read this when submitting a PR: `docs/help/submitting-a-pr.md` ([Submitting a PR](https://docs.openclaw.ai/help/submitting-a-pr))
 - Read this when submitting an issue: `docs/help/submitting-an-issue.md` ([Submitting an Issue](https://docs.openclaw.ai/help/submitting-an-issue))
-- PR review flow: when given a PR link, review via `gh pr view`/`gh pr diff` and do **not** change branches.
-- PR review calls: prefer a single `gh pr view --json ...` to batch metadata/comments; run `gh pr diff` only when needed.
-- Before starting a review when a GH Issue/PR is pasted: run `git pull`; if there are local changes or unpushed commits, stop and alert the user before reviewing.
-- Goal: merge PRs. Prefer **rebase** when commits are clean; **squash** when history is messy.
-- PR merge flow: create a temp branch from `main`, merge the PR branch into it (prefer squash unless commit history is important; use rebase/merge when it is). Always try to merge the PR unless it’s truly difficult, then use another approach. If we squash, add the PR author as a co-contributor. Apply fixes, add changelog entry (include PR # + thanks), run full gate before the final commit, commit, merge back to `main`, delete the temp branch, and end on `main`.
-- If you review a PR and later do work on it, land via merge/squash (no direct-main commits) and always add the PR author as a co-contributor.
-- When working on a PR: add a changelog entry with the PR number and thank the contributor.
-- When working on an issue: reference the issue in the changelog entry.
-- When merging a PR: leave a PR comment that explains exactly what we did and include the SHA hashes.
-- When merging a PR from a new contributor: add their avatar to the README “Thanks to all clawtributors” thumbnail list.
-- After merging a PR: run `bun scripts/update-clawtributors.ts` if the contributor is missing, then commit the regenerated README.
 
 ## Shorthand Commands
 
 - `sync`: if working tree is dirty, commit all changes (pick a sensible Conventional Commit message), then `git pull --rebase`; if rebase conflicts and cannot resolve, stop; otherwise `git push`.
-
-### PR Workflow (Review vs Land)
-
-- **Review mode (PR link only):** read `gh pr view/diff`; **do not** switch branches; **do not** change code.
-- **Landing mode:** create an integration branch from `main`, bring in PR commits (**prefer rebase** for linear history; **merge allowed** when complexity/conflicts make it safer), apply fixes, add changelog (+ thanks + PR #), run full gate **locally before committing** (`pnpm build && pnpm check && pnpm test`), commit, merge back to `main`, then `git switch main` (never stay on a topic branch after landing). Important: contributor needs to be in git graph after this!
 
 ## Security & Configuration Tips
 
@@ -143,9 +112,7 @@
 - Pi sessions live under `~/.openclaw/sessions/` by default; the base directory is not configurable.
 - Environment variables: see `~/.profile`.
 - Never commit or publish real phone numbers, videos, or live configuration values. Use obviously fake placeholders in docs, tests, and examples.
-  - Release flow: always read `docs/reference/RELEASING.md` and `docs/platforms/mac/release.md` before any release work; do not ask routine questions once those docs answer them.
-- DM security: Default `dmPolicy="pairing"` requires unknown senders to pair via approval code. Public DMs need explicit opt-in (`dmPolicy="open"` with `"*"` in allowlist). See `docs/gateway/security.md`.
-- Gateway auth: Use `gateway.auth.token` or `OPENCLAW_GATEWAY_TOKEN` for all WS connections. Local connections can be auto-approved; remote requires explicit pairing.
+- Release flow: always read `docs/reference/RELEASING.md` and `docs/platforms/mac/release.md` before any release work; do not ask routine questions once those docs answer them.
 
 ## Troubleshooting
 
@@ -155,6 +122,7 @@
 
 - Vocabulary: "makeup" = "mac app".
 - Never edit `node_modules` (global/Homebrew/npm/git installs too). Updates overwrite. Skill notes go in `tools.md` or `AGENTS.md`.
+- When adding a new `AGENTS.md` anywhere in the repo, also add a `CLAUDE.md` symlink pointing to it (example: `ln -s AGENTS.md CLAUDE.md`).
 - Signal: "update fly" => `fly ssh console -a flawd-bot -C "bash -lc 'cd /data/clawd/openclaw && git pull --rebase origin main'"` then `fly machines restart e825232f34d058 -a flawd-bot`.
 - When working on a GitHub Issue or PR, print the full URL at the end of the task.
 - When answering questions, respond with high-confidence answers only: verify in code; do not guess.
@@ -169,6 +137,7 @@
 - SwiftUI state management (iOS/macOS): prefer the `Observation` framework (`@Observable`, `@Bindable`) over `ObservableObject`/`@StateObject`; don’t introduce new `ObservableObject` unless required for compatibility, and migrate existing usages when touching related code.
 - Connection providers: when adding a new connection, update every UI surface and docs (macOS app, web UI, mobile if applicable, onboarding/overview docs) and add matching status + configuration forms so provider lists and settings stay in sync.
 - Version locations: `package.json` (CLI), `apps/android/app/build.gradle.kts` (versionName/versionCode), `apps/ios/Sources/Info.plist` + `apps/ios/Tests/Info.plist` (CFBundleShortVersionString/CFBundleVersion), `apps/macos/Sources/OpenClaw/Resources/Info.plist` (CFBundleShortVersionString/CFBundleVersion), `docs/install/updating.md` (pinned npm version), `docs/platforms/mac/release.md` (APP_VERSION/APP_BUILD examples), Peekaboo Xcode projects/Info.plists (MARKETING_VERSION/CURRENT_PROJECT_VERSION).
+- "Bump version everywhere" means all version locations above **except** `appcast.xml` (only touch appcast when cutting a new macOS Sparkle release).
 - **Restart apps:** “restart iOS/Android apps” means rebuild (recompile/install) and relaunch, not just kill/launch.
 - **Device checks:** before testing, verify connected real devices (iOS/Android) before reaching for simulators/emulators.
 - iOS Team ID lookup: `security find-identity -p codesigning -v` → use Apple Development (…) TEAMID. Fallback: `defaults read com.apple.dt.Xcode IDEProvisioningTeamIdentifiers`.
@@ -208,23 +177,3 @@
 - Publish: `npm publish --access public --otp="<otp>"` (run from the package dir).
 - Verify without local npmrc side effects: `npm view <pkg> version --userconfig "$(mktemp)"`.
 - Kill the tmux session after publish.
-
-## Key Architecture Patterns
-
-- **Gateway as control plane**: All messaging channels, sessions, tools, and events flow through a single Gateway WebSocket server (default `127.0.0.1:18789`).
-- **Session routing**: Inbound messages route to agents via `bindings` config. Session keys follow pattern `agent:<agentId>:<channel>:<type>:<id>`. Direct messages collapse to `agent:<agentId>:main`.
-- **Provider abstraction**: Models support multiple providers (Anthropic, OpenAI, Google, etc.) with unified profiles and failover. See `src/providers/` and `src/agents/auth-profiles/`.
-- **Channel plugin system**: Extensions in `extensions/*/` can add new messaging channels. Plugin SDK provides typed interfaces for channel implementation.
-- **Tool policy**: Tools can be gated by sandbox policy, exec approval, or node permissions. See `docs/gateway/sandbox-vs-tool-policy-vs-elevated.md`.
-- **Media pipeline**: Images/audio/video flow through `src/media/` with transcription hooks, size caps, and temp file lifecycle management.
-- **Streaming**: Agent responses stream blocks and tool calls. Gateway forwards chunks to channels that support it. See `docs/concepts/streaming.md`.
-
-## Important Gotchas
-
-- Gateway is the only component that opens WhatsApp sessions (Baileys). Never run multiple gateways against the same session.
-- Always consider all built-in + extension channels when refactoring routing, allowlists, or pairing logic.
-- Test coverage excludes CLI/commands/daemon/hooks and some integration surfaces (intentionally validated via e2e/manual runs). See `vitest.config.ts`.
-- A2UI bundle hash in `src/canvas-host/a2ui/.bundle.hash` is auto-generated; regenerate via `pnpm canvas:a2ui:bundle` when needed.
-- Carbon dependency is locked; never update without explicit approval.
-- Dependencies with `pnpm.patchedDependencies` must use exact versions (no `^`/`~`).
-- Avoid `Type.Union` in tool input schemas; use `stringEnum`/`optionalStringEnum` for string lists, `Type.Optional()` instead of `| null`.

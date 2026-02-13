@@ -1,31 +1,35 @@
-# Multi-stage build for OpenClaw Docker image
-# Stage 1: Builder
-FROM node:22-alpine AS builder
+FROM node:22-bookworm
 
-# Install build dependencies
-RUN apk add --no-cache python3 make g++
+# Install Bun (required for build scripts)
+RUN curl -fsSL https://bun.sh/install | bash
+ENV PATH="/root/.bun/bin:${PATH}"
+
+RUN corepack enable
 
 WORKDIR /app
 
-# Install OpenClaw globally
-RUN npm install -g openclaw@latest
+ARG OPENCLAW_DOCKER_APT_PACKAGES=""
+RUN if [ -n "$OPENCLAW_DOCKER_APT_PACKAGES" ]; then \
+      apt-get update && \
+      DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends $OPENCLAW_DOCKER_APT_PACKAGES && \
+      apt-get clean && \
+      rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*; \
+    fi
 
-# Stage 2: Runtime
-FROM node:22-alpine
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+COPY ui/package.json ./ui/package.json
+COPY patches ./patches
+COPY scripts ./scripts
 
-# Install runtime dependencies
-RUN apk add --no-cache \
-    git \
-    curl \
-    tzdata \
-    ca-certificates
+RUN pnpm install --frozen-lockfile
 
-# Copy OpenClaw from builder
-COPY --from=builder /usr/local/lib/node_modules/openclaw /usr/local/lib/node_modules/openclaw
-COPY --from=builder /usr/local/bin/openclaw /usr/local/bin/openclaw
+COPY . .
+RUN pnpm build
+# Force pnpm for UI build (Bun may fail on ARM/Synology architectures)
+ENV OPENCLAW_PREFER_PNPM=1
+RUN pnpm ui:build
 
-# Create symbolic link for gateway
-RUN ln -sf /usr/local/lib/node_modules/openclaw/dist/index.js /usr/local/bin/openclaw
+ENV NODE_ENV=production
 
 # Allow non-root user to write temp files during runtime/tests.
 RUN chown -R node:node /app
